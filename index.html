@@ -528,7 +528,7 @@ document.getElementById('enviar').addEventListener('click', async ()=>{
       btn.disabled = true; btn.textContent = 'Enviado ✓';
       document.getElementById('voltar').disabled = true;
       // …e reinicia tudo ao estado inicial (que já rebusca as vagas)
-      setTimeout(resetarFormulario, 2500);
+      setTimeout(resetarFormulario, 10000);
     }else{
       btn.disabled = false; btn.textContent = 'Enviar para a planilha';
       carregarVagas();
