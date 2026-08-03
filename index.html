@@ -143,19 +143,19 @@
   <!-- 1. Dados do aluno -->
   <div class="card">
     <h2><span class="n">1</span> Identificação do aluno</h2>
-    <p class="hint">Preencha seus dados para que a coordenação localize sua matrícula.</p>
+    <p class="hint">Preencha seus dados para que a coordenação localize sua matrícula. Campos com <span style="color:var(--sair)">*</span> são obrigatórios.</p>
     <div class="grid">
       <div class="field full">
-        <label for="nome">Nome completo</label>
-        <input id="nome" type="text" placeholder="Ex.: Maria de Sousa Lima">
+        <label for="nome">Nome completo <span style="color:var(--sair)">*</span></label>
+        <input id="nome" type="text" required placeholder="Ex.: Maria de Sousa Lima">
       </div>
       <div class="field">
-        <label for="matricula">Matrícula</label>
-        <input id="matricula" type="text" inputmode="numeric" placeholder="Ex.: 2024123456">
+        <label for="matricula">Matrícula <span style="color:var(--sair)">*</span></label>
+        <input id="matricula" type="text" inputmode="numeric" required placeholder="Ex.: 2024123456">
       </div>
       <div class="field">
-        <label for="email">E-mail institucional</label>
-        <input id="email" type="email" placeholder="aluno@exemplo.edu.br">
+        <label for="email">E-mail institucional <span style="color:var(--sair)">*</span></label>
+        <input id="email" type="email" required placeholder="aluno@exemplo.edu.br">
       </div>
       <div class="field">
         <label for="curso">Curso</label>
@@ -432,7 +432,8 @@ function coletar(){
 
 document.getElementById('gerar').addEventListener('click', ()=>{
   const f = coletar();
-  if(!f.nome || !f.matricula){ showMsg('msg','Preencha nome e matrícula (etapa 1).','err'); return; }
+  if(!f.nome || !f.matricula || !f.email){ showMsg('msg','Preencha nome, matrícula e e-mail (etapa 1).','err'); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)){ showMsg('msg','Informe um e-mail válido (etapa 1).','err'); return; }
   if(f.sair.length===0 && f.entrar.length===0){ showMsg('msg','Marque ao menos uma disciplina para sair ou entrar.','err'); return; }
   if(!f.justificativa){ showMsg('msg','Escreva a justificativa da solicitação.','err'); return; }
 
@@ -461,6 +462,22 @@ document.getElementById('voltar').addEventListener('click', ()=>{
   window.scrollTo({top:0,behavior:'smooth'});
 });
 document.getElementById('imprimir').addEventListener('click', ()=>window.print());
+
+// Devolve o formulário ao estado inicial, como se a página tivesse acabado de carregar.
+function resetarFormulario(){
+  Object.keys(estado).forEach(k=>delete estado[k]);                 // limpa seleções
+  ['nome','matricula','email','justif','busca'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('periodo').value='';
+  document.getElementById('msg').className='msg';                    // some com as mensagens
+  document.getElementById('msg-envio').className='msg';
+  document.getElementById('doc').style.display='none';              // esconde o requerimento
+  const be = document.getElementById('enviar');                     // reativa os botões
+  be.disabled=false; be.textContent='Enviar para a planilha';
+  document.getElementById('voltar').disabled=false;
+  render(); atualizarResumo();                                     // redesenha a lista limpa
+  carregarVagas();                                                 // rebusca as vagas atuais
+  window.scrollTo({top:0, behavior:'smooth'});
+}
 
 function textoRequerimento(f){
   let t=`REQUERIMENTO DE ALTERAÇÃO DE MATRÍCULA\nBacharelado em Ciência da Computação — Caxias · 2026.2\n\n`;
@@ -495,19 +512,27 @@ document.getElementById('enviar').addEventListener('click', async ()=>{
   }
 
   const btn = document.getElementById('enviar');
+  let sucesso = false;
   btn.disabled = true; btn.textContent = 'Enviando…';
   try{
     const res = await fetch(SHEETS_WEBAPP_URL, { method:'POST', body: JSON.stringify(payload) });
     let ok = true;
     try { const j = await res.json(); ok = j.ok !== false; } catch(_){ /* resposta opaca (CORS) — assume envio */ }
-    if(ok) showMsg('msg-envio','Solicitação enviada e salva na planilha. Confira uma nova linha na aba "Solicitações".','ok');
+    if(ok){ sucesso = true; showMsg('msg-envio','Solicitação enviada e salva na planilha. O formulário será reiniciado…','ok'); }
     else   showMsg('msg-envio','A planilha respondeu com erro. Verifique a implantação do Apps Script.','err');
   }catch(err){
     showMsg('msg-envio','Não foi possível enviar a partir daqui (comum na pré-visualização). Baixe/abra este arquivo no seu navegador e envie novamente.','info');
   }finally{
-    btn.disabled = false; btn.textContent = 'Enviar para a planilha';
-    // relê as vagas da planilha para refletir esta e outras solicitações
-    carregarVagas();
+    if(sucesso){
+      // impede reenvio: trava "Enviar" e "Voltar e editar"…
+      btn.disabled = true; btn.textContent = 'Enviado ✓';
+      document.getElementById('voltar').disabled = true;
+      // …e reinicia tudo ao estado inicial (que já rebusca as vagas)
+      setTimeout(resetarFormulario, 2500);
+    }else{
+      btn.disabled = false; btn.textContent = 'Enviar para a planilha';
+      carregarVagas();
+    }
   }
 });
 
@@ -520,3 +545,5 @@ carregarVagas();   // busca as vagas atuais assim que a página abre
 </script>
 </body>
 </html>
+
+ 
