@@ -54,6 +54,8 @@
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
   .dot.s{background:var(--sair)} .dot.e{background:var(--entrar)} .dot.f{background:var(--warn)}
+  .sync{font-size:12px;color:var(--ink-soft);width:100%;display:flex;align-items:center;gap:6px;min-height:16px}
+  .sync.err{color:var(--sair)} .sync.ok{color:var(--entrar)}
 
   .turma-group{margin-bottom:18px}
   .turma-head{display:flex;align-items:baseline;gap:8px;padding:6px 2px;margin-bottom:8px;border-bottom:1px solid var(--line)}
@@ -135,7 +137,7 @@
 
   <div class="banner" id="banner-config">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
-    <div><b>Integração com Google Sheets ainda não configurada.</b> Os dados não serão salvos na planilha até você colar a URL do Apps Script na constante <code>SHEETS_WEBAPP_URL</code> (topo do &lt;script&gt;). Enquanto isso, o formulário funciona normalmente para gerar e imprimir o requerimento.</div>
+    <div><b>Integração com Google Sheets ainda não configurada.</b> Os dados não serão salvos na planilha nem as vagas serão sincronizadas até você colar a URL do Apps Script na constante <code>SHEETS_WEBAPP_URL</code> (topo do &lt;script&gt;). Enquanto isso, o formulário funciona normalmente para gerar e imprimir o requerimento, exibindo as vagas iniciais fixas.</div>
   </div>
 
   <!-- 1. Dados do aluno -->
@@ -175,7 +177,7 @@
   <!-- 2. Disciplinas -->
   <div class="card">
     <h2><span class="n">2</span> Disciplinas</h2>
-    <p class="hint">Marque <strong>Sair</strong> nas disciplinas que deseja cancelar/trancar e <strong>Entrar</strong> nas que deseja incluir. Turmas com 45/45 vagas ficam bloqueadas para inclusão.</p>
+    <p class="hint">Marque <strong>Sair</strong> nas disciplinas que deseja cancelar/trancar e <strong>Entrar</strong> nas que deseja incluir. Turmas com 45/45 vagas ficam bloqueadas para inclusão. As vagas são carregadas da planilha ao abrir a página.</p>
     <div class="toolbar">
       <div class="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
@@ -186,6 +188,7 @@
         <span><i class="dot e"></i>Entrar</span>
         <span><i class="dot f"></i>Turma cheia (bloqueada)</span>
       </div>
+      <div class="sync" id="sync-status"></div>
     </div>
     <div id="lista"></div>
   </div>
@@ -258,6 +261,8 @@ const SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbykA34_MPXkGk
 
 const LIMITE_VAGAS = 45;
 
+/* Vagas INICIAIS (fallback). Quando o Apps Script está configurado, estes
+   números são substituídos pelos que vêm da planilha ao carregar a página. */
 const DISCIPLINAS = [
   {n:1,  sig:"SUP.02181", nome:"Cálculo Diferencial e Integral II", turma:"cc12", ativos:46},
   {n:2,  sig:"SUP.02184", nome:"Eletrônica Analógica", turma:"cc12", ativos:27},
@@ -316,7 +321,7 @@ function render(){
         </div>
         <div class="actions">
           <button class="btn-tog sair ${st==='sair'?'active':''}" data-act="sair">Sair</button>
-          <button class="btn-tog entrar ${st==='entrar'?'active':''}" data-act="entrar" ${full?'disabled title="Turma cheia — inclusão bloqueada"':''}>Entrar</button>
+          <button class="btn-tog entrar ${st==='entrar'?'active':''}" data-act="entrar" ${full && st!=='entrar' ?'disabled title="Turma cheia — inclusão bloqueada"':''}>Entrar</button>
         </div>`;
       group.appendChild(row);
     });
@@ -366,6 +371,44 @@ function showMsg(id, text, kind){
   m.textContent = text;
   m.className = 'msg show ' + kind;
   if(kind==='ok') setTimeout(()=>m.classList.remove('show'), 5000);
+}
+
+function setSync(text, kind){
+  const el = document.getElementById('sync-status');
+  el.textContent = text;
+  el.className = 'sync' + (kind ? ' ' + kind : '');
+}
+
+/* ---------- leitura das vagas via JSONP (contorna o CORS do Apps Script) ---------- */
+function jsonp(url){
+  return new Promise((resolve, reject)=>{
+    const cb = 'cb_' + Math.random().toString(36).slice(2);
+    const s = document.createElement('script');
+    const timer = setTimeout(()=>{ cleanup(); reject(new Error('timeout')); }, 12000);
+    function cleanup(){ delete window[cb]; s.remove(); clearTimeout(timer); }
+    window[cb] = data => { cleanup(); resolve(data); };
+    s.onerror = () => { cleanup(); reject(new Error('script error')); };
+    s.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb + '&t=' + Date.now();
+    document.body.appendChild(s);
+  });
+}
+
+async function carregarVagas(){
+  if(!SHEETS_WEBAPP_URL){ setSync('Vagas iniciais (planilha não configurada).', ''); return; }
+  setSync('Sincronizando vagas com a planilha…', '');
+  try{
+    const j = await jsonp(SHEETS_WEBAPP_URL);
+    if(j && j.ok && j.contagens){
+      DISCIPLINAS.forEach(d=>{ if(j.contagens[d.sig] != null) d.ativos = j.contagens[d.sig]; });
+      render();
+      const hora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+      setSync('Vagas sincronizadas com a planilha ✓  (' + hora + ')', 'ok');
+    }else{
+      setSync('Não foi possível sincronizar — exibindo os últimos números conhecidos.', 'err');
+    }
+  }catch(_){
+    setSync('Não foi possível sincronizar — exibindo os últimos números conhecidos.', 'err');
+  }
 }
 
 document.getElementById('limpar').addEventListener('click', ()=>{
@@ -442,6 +485,8 @@ document.getElementById('enviar').addEventListener('click', async ()=>{
     nome:f.nome, matricula:f.matricula, email:f.email, periodo:f.periodo,
     justificativa:f.justificativa,
     sair:f.sair.map(fmt), entrar:f.entrar.map(fmt),
+    // siglas "cruas" — é o que o Apps Script usa para contar as vagas:
+    sair_sigs:f.sair.map(d=>d.sig), entrar_sigs:f.entrar.map(d=>d.sig),
   };
 
   if(!SHEETS_WEBAPP_URL){
@@ -461,6 +506,8 @@ document.getElementById('enviar').addEventListener('click', async ()=>{
     showMsg('msg-envio','Não foi possível enviar a partir daqui (comum na pré-visualização). Baixe/abra este arquivo no seu navegador e envie novamente.','info');
   }finally{
     btn.disabled = false; btn.textContent = 'Enviar para a planilha';
+    // relê as vagas da planilha para refletir esta e outras solicitações
+    carregarVagas();
   }
 });
 
@@ -469,6 +516,7 @@ if(SHEETS_WEBAPP_URL){ document.getElementById('banner-config').classList.add('h
 
 render();
 atualizarResumo();
+carregarVagas();   // busca as vagas atuais assim que a página abre
 </script>
 </body>
 </html>
