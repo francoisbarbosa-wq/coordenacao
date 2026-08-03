@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitação de Alteração de Matrícula — BCC Caxias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF9F5; --ink:#1B2A4A; --ink-soft:#4A5468;
+    --line:#E2DFD6; --line-strong:#CFCBBE;
+    --sair:#C1483C; --sair-bg:#FBEEEC;
+    --entrar:#2E7D5B; --entrar-bg:#E9F3ED;
+    --warn:#9A6A17; --warn-bg:#FBF2DC; --warn-line:#EAD9A8;
+    --white:#FFFFFF;
+    --shadow:0 1px 2px rgba(27,42,74,.06),0 8px 24px rgba(27,42,74,.06);
+    --serif:'Spectral',Georgia,serif;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;padding:24px 16px 64px}
+  .wrap{max-width:900px;margin:0 auto}
+  header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:22px}
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-bottom:8px}
+  h1{font-family:var(--serif);font-weight:700;font-size:30px;line-height:1.15;letter-spacing:-.01em}
+  .sub{color:var(--ink-soft);font-size:14px;margin-top:6px}
+
+  .banner{display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn);border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:20px}
+  .banner svg{flex:none;margin-top:1px}
+  .banner b{font-weight:700}
+  .banner.hidden{display:none}
+
+  .card{background:var(--white);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:22px;margin-bottom:20px}
+  .card > h2{font-family:var(--serif);font-size:18px;font-weight:600;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .card > h2 .n{font-family:var(--sans);font-size:12px;font-weight:700;background:var(--ink);color:var(--white);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .card > .hint{color:var(--ink-soft);font-size:13px;margin:2px 0 16px 32px}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field.full{grid-column:1/-1}
+  label{font-size:12px;font-weight:600;color:var(--ink-soft);letter-spacing:.01em}
+  input,textarea,select{font-family:var(--sans);font-size:14px;color:var(--ink);border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;background:var(--paper);transition:border-color .15s,background .15s}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--ink);background:var(--white);box-shadow:0 0 0 3px rgba(27,42,74,.08)}
+  textarea{resize:vertical;min-height:78px}
+  input[readonly]{color:var(--ink-soft);cursor:not-allowed}
+
+  .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 16px}
+  .search{flex:1;min-width:200px;position:relative}
+  .search input{width:100%;padding-left:34px}
+  .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.45}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .dot.s{background:var(--sair)} .dot.e{background:var(--entrar)} .dot.f{background:var(--warn)}
+
+  .turma-group{margin-bottom:18px}
+  .turma-head{display:flex;align-items:baseline;gap:8px;padding:6px 2px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+  .turma-head .tag{font-weight:700;font-size:12px;letter-spacing:.04em;background:var(--ink);color:var(--white);padding:2px 8px;border-radius:5px}
+  .turma-head .code{font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+
+  .disc{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:var(--white);transition:border-color .15s,background .15s}
+  .disc.hidden{display:none}
+  .disc.on-sair{border-color:var(--sair);background:var(--sair-bg)}
+  .disc.on-entrar{border-color:var(--entrar);background:var(--entrar-bg)}
+  .disc.full{background:#FCFBF7}
+  .disc .info{min-width:0}
+  .disc .name{font-size:14px;font-weight:600;line-height:1.25}
+  .disc .meta{font-size:12px;color:var(--ink-soft);margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .disc .meta .sig{font-variant-numeric:tabular-nums;font-weight:500}
+  .vagas{font-variant-numeric:tabular-nums}
+  .vagas.cheia{color:var(--warn);font-weight:600}
+  .tag-cheia{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);padding:1px 6px;border-radius:20px}
+  .actions{display:flex;gap:6px;flex:none}
+  .btn-tog{font-family:var(--sans);font-size:12px;font-weight:600;border:1px solid var(--line-strong);background:var(--white);color:var(--ink-soft);padding:6px 11px;border-radius:7px;cursor:pointer;transition:all .12s;white-space:nowrap}
+  .btn-tog:hover:not(:disabled){border-color:var(--ink-soft)}
+  .btn-tog.sair.active{background:var(--sair);border-color:var(--sair);color:#fff}
+  .btn-tog.entrar.active{background:var(--entrar);border-color:var(--entrar);color:#fff}
+  .btn-tog:disabled{opacity:.4;cursor:not-allowed}
+
+  .sum-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .sum-box{border:1px dashed var(--line-strong);border-radius:10px;padding:14px}
+  .sum-box h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+  .sum-box.s h3{color:var(--sair)} .sum-box.e h3{color:var(--entrar)}
+  .sum-box ul{list-style:none;font-size:13px}
+  .sum-box li{padding:4px 0;border-bottom:1px solid var(--line)}
+  .sum-box li:last-child{border:none}
+  .sum-box .empty{color:var(--ink-soft);font-style:italic;font-size:13px}
+
+  .row-end{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
+  .btn{font-family:var(--sans);font-size:14px;font-weight:600;padding:11px 20px;border-radius:9px;cursor:pointer;border:1px solid transparent;transition:transform .08s,filter .12s}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--ink);color:#fff}
+  .btn.primary:hover{filter:brightness(1.15)}
+  .btn.ghost{background:var(--white);border-color:var(--line-strong);color:var(--ink)}
+  .btn.ghost:hover{border-color:var(--ink)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .msg{font-size:13px;font-weight:500;padding:10px 14px;border-radius:8px;margin-top:14px;display:none}
+  .msg.show{display:block}
+  .msg.err{background:var(--sair-bg);color:var(--sair)}
+  .msg.ok{background:var(--entrar-bg);color:var(--entrar)}
+  .msg.info{background:var(--warn-bg);color:var(--warn)}
+
+  #doc{display:none;margin-top:24px}
+  #doc .card{border-color:var(--line-strong)}
+  .doc-h{text-align:center;margin-bottom:20px}
+  .doc-h .org{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+  .doc-h .ttl{font-family:var(--serif);font-size:22px;font-weight:700;margin-top:4px}
+  .doc-sec{margin-bottom:16px}
+  .doc-sec .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);font-weight:600}
+  .doc-sec .v{font-size:14px;margin-top:2px}
+  .doc-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
+  .doc-table th,.doc-table td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line)}
+  .doc-table th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
+  .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .pill.s{background:var(--sair-bg);color:var(--sair)}
+  .pill.e{background:var(--entrar-bg);color:var(--entrar)}
+  .sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:44px}
+  .sign div{border-top:1px solid var(--ink);padding-top:6px;font-size:12px;color:var(--ink-soft);text-align:center}
+
+  @media (max-width:640px){.grid,.sum-cols{grid-template-columns:1fr}.sign{grid-template-columns:1fr;gap:36px}h1{font-size:24px}}
+  @media print{body{background:#fff;padding:0}.card,header,.toolbar,.banner{display:none!important}#doc{display:block!important;margin:0}#doc .card{display:block!important;box-shadow:none;border:none}.no-print{display:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Coordenação de Curso · Requerimento acadêmico</div>
+    <h1>Solicitação de alteração de matrícula</h1>
+    <p class="sub">Bacharelado em Ciência da Computação — Caxias · Período letivo 2026.2 · Limite de 45 vagas por turma</p>
+  </header>
+
+  <div class="banner" id="banner-config">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+    <div><b>Integração com Google Sheets ainda não configurada.</b> Os dados não serão salvos na planilha até você colar a URL do Apps Script na constante <code>SHEETS_WEBAPP_URL</code> (topo do &lt;script&gt;). Enquanto isso, o formulário funciona normalmente para gerar e imprimir o requerimento.</div>
+  </div>
+
+  <!-- 1. Dados do aluno -->
+  <div class="card">
+    <h2><span class="n">1</span> Identificação do aluno</h2>
+    <p class="hint">Preencha seus dados para que a coordenação localize sua matrícula.</p>
+    <div class="grid">
+      <div class="field full">
+        <label for="nome">Nome completo</label>
+        <input id="nome" type="text" placeholder="Ex.: Maria de Sousa Lima">
+      </div>
+      <div class="field">
+        <label for="matricula">Matrícula</label>
+        <input id="matricula" type="text" inputmode="numeric" placeholder="Ex.: 2024123456">
+      </div>
+      <div class="field">
+        <label for="email">E-mail institucional</label>
+        <input id="email" type="email" placeholder="aluno@exemplo.edu.br">
+      </div>
+      <div class="field">
+        <label for="curso">Curso</label>
+        <input id="curso" type="text" value="Bacharelado em Ciência da Computação — Caxias (BCC.CAX)" readonly>
+      </div>
+      <div class="field">
+        <label for="periodo">Período que está cursando</label>
+        <select id="periodo">
+          <option value="">Selecione…</option>
+          <option>2º período</option>
+          <option>6º período</option>
+          <option>8º período</option>
+          <option>Outro</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Disciplinas -->
+  <div class="card">
+    <h2><span class="n">2</span> Disciplinas</h2>
+    <p class="hint">Marque <strong>Sair</strong> nas disciplinas que deseja cancelar/trancar e <strong>Entrar</strong> nas que deseja incluir. Turmas com 45/45 vagas ficam bloqueadas para inclusão.</p>
+    <div class="toolbar">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+        <input id="busca" type="text" placeholder="Buscar por nome ou sigla…">
+      </div>
+      <div class="legend">
+        <span><i class="dot s"></i>Sair</span>
+        <span><i class="dot e"></i>Entrar</span>
+        <span><i class="dot f"></i>Turma cheia (bloqueada)</span>
+      </div>
+    </div>
+    <div id="lista"></div>
+  </div>
+
+  <!-- 3. Justificativa + resumo -->
+  <div class="card">
+    <h2><span class="n">3</span> Justificativa e resumo</h2>
+    <p class="hint">Descreva o motivo da solicitação. Requerimentos sem justificativa costumam ser indeferidos.</p>
+    <div class="field full" style="margin-bottom:18px">
+      <label for="justif">Justificativa</label>
+      <textarea id="justif" placeholder="Ex.: Choque de horário entre Estrutura de Dados I e Matemática Discreta; desejo cursar Inteligência Artificial em substituição."></textarea>
+    </div>
+    <div class="sum-cols">
+      <div class="sum-box s">
+        <h3>Sair (<span id="cont-sair">0</span>)</h3>
+        <ul id="resumo-sair"><li class="empty">Nenhuma disciplina marcada.</li></ul>
+      </div>
+      <div class="sum-box e">
+        <h3>Entrar (<span id="cont-entrar">0</span>)</h3>
+        <ul id="resumo-entrar"><li class="empty">Nenhuma disciplina marcada.</li></ul>
+      </div>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="row-end no-print" style="margin-top:18px">
+      <button class="btn ghost" id="limpar">Limpar tudo</button>
+      <button class="btn primary" id="gerar">Gerar solicitação</button>
+    </div>
+  </div>
+
+  <!-- Documento gerado -->
+  <div id="doc">
+    <div class="card">
+      <div class="doc-h">
+        <div class="org">Bacharelado em Ciência da Computação — Caxias · 2026.2</div>
+        <div class="ttl">Requerimento de alteração de matrícula</div>
+      </div>
+      <div class="doc-sec"><div class="k">Aluno</div><div class="v" id="d-nome"></div></div>
+      <div class="grid" style="gap:10px;margin-bottom:16px">
+        <div class="doc-sec"><div class="k">Matrícula</div><div class="v" id="d-mat"></div></div>
+        <div class="doc-sec"><div class="k">Período</div><div class="v" id="d-per"></div></div>
+        <div class="doc-sec"><div class="k">E-mail</div><div class="v" id="d-email"></div></div>
+        <div class="doc-sec"><div class="k">Data</div><div class="v" id="d-data"></div></div>
+      </div>
+      <table class="doc-table" id="d-table">
+        <thead><tr><th>Ação</th><th>Sigla</th><th>Disciplina</th><th>Turma</th><th>Vagas</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="doc-sec" style="margin-top:18px"><div class="k">Justificativa</div><div class="v" id="d-just"></div></div>
+      <div class="sign">
+        <div>Assinatura do aluno</div>
+        <div>Deferimento — Coordenação do curso</div>
+      </div>
+    </div>
+    <div class="msg" id="msg-envio"></div>
+    <div class="row-end no-print">
+      <button class="btn ghost" id="voltar">Voltar e editar</button>
+      <button class="btn ghost" id="copiar">Copiar texto</button>
+      <button class="btn ghost" id="imprimir">Imprimir / Salvar PDF</button>
+      <button class="btn primary" id="enviar">Enviar para a planilha</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURAÇÃO — cole aqui a URL do seu Apps Script (termina em /exec)
+   ============================================================ */
+const SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbykA34_MPXkGkATvg3SNjnXN88-vipRKmsY2rRecILe3UuTxoBOJH94W3lfCBFEo7dRZw/exec"; // <-- cole a URL entre as aspas
+
+const LIMITE_VAGAS = 45;
+
+const DISCIPLINAS = [
+  {n:1,  sig:"SUP.02181", nome:"Cálculo Diferencial e Integral II", turma:"cc12", ativos:46},
+  {n:2,  sig:"SUP.02184", nome:"Eletrônica Analógica", turma:"cc12", ativos:27},
+  {n:3,  sig:"SUP.01667", nome:"Estrutura de Dados I", turma:"cc12", ativos:45},
+  {n:4,  sig:"SUP.00826", nome:"Inglês Instrumental", turma:"cc12", ativos:39},
+  {n:5,  sig:"SUP.00825", nome:"Introdução à Metodologia Científica", turma:"cc12", ativos:41},
+  {n:6,  sig:"SUP.01664", nome:"Matemática Discreta", turma:"cc12", ativos:43},
+  {n:7,  sig:"SUP.02548", nome:"Construção de Compiladores", turma:"cc11", ativos:38},
+  {n:8,  sig:"SUP.02555", nome:"Informática e Sociedade", turma:"cc11", ativos:40},
+  {n:9,  sig:"SUP.02557", nome:"Inteligência Artificial", turma:"cc11", ativos:30},
+  {n:10, sig:"SUP.02568", nome:"Projeto e Análise de Algoritmo", turma:"cc11", ativos:40},
+  {n:11, sig:"SUP.02575", nome:"Sistemas Operacionais", turma:"cc11", ativos:43},
+  {n:12, sig:"SUP.04585", nome:"Atividade de Extensão II", turma:"cc11", ativos:35},
+  {n:20, sig:"SUP.02566", nome:"Programação para Dispositivos Móveis", turma:"cc11", ativos:45},
+  {n:13, sig:"SUP.03195", nome:"Direitos Humanos e Ética na Computação", turma:"cc10", ativos:42},
+  {n:14, sig:"SUP.02572", nome:"Relações Étnico-raciais e Cultura Afro-brasileira e Indígena", turma:"cc10", ativos:41},
+  {n:15, sig:"SUP.03152", nome:"Trabalho de Conclusão de Curso II", turma:"cc10", ativos:14},
+  {n:16, sig:"SUP.04587", nome:"Atividade de Extensão III", turma:"cc10", ativos:30},
+  {n:17, sig:"SUP.06486", nome:"Visão Computacional", turma:"cc10", ativos:22},
+  {n:18, sig:"SUP.02559", nome:"LIBRAS - Língua Brasileira de Sinais", turma:"cc10", ativos:45},
+  {n:19, sig:"SUP.02571", nome:"Redes Neurais", turma:"cc10", ativos:21},
+];
+const TURMAS = {
+  cc12:{tag:"cc12", code:"20262.2.BCC.CAX.831.2I"},
+  cc11:{tag:"cc11", code:"20262.6.BCC.CAX.831.1I"},
+  cc10:{tag:"cc10", code:"20262.8.BCC.CAX.831.1I"},
+};
+const ORDER = ["cc12","cc11","cc10"];
+const isFull = d => d.ativos >= LIMITE_VAGAS;
+
+const estado = {}; // sig -> "sair" | "entrar" | null
+const lista = document.getElementById('lista');
+
+function render(){
+  lista.innerHTML = '';
+  ORDER.forEach(tk=>{
+    const t = TURMAS[tk];
+    const group = document.createElement('div');
+    group.className = 'turma-group';
+    group.innerHTML = `<div class="turma-head"><span class="tag">${t.tag}</span><span class="code">${t.code}</span></div>`;
+    DISCIPLINAS.filter(d=>d.turma===tk).forEach(d=>{
+      const st = estado[d.sig];
+      const full = isFull(d);
+      const row = document.createElement('div');
+      row.className = 'disc' + (st==='sair'?' on-sair':st==='entrar'?' on-entrar':'') + (full?' full':'');
+      row.dataset.sig = d.sig;
+      row.dataset.nome = d.nome.toLowerCase();
+      row.innerHTML = `
+        <div class="info">
+          <div class="name">${d.nome}</div>
+          <div class="meta">
+            <span class="sig">${d.sig}</span>
+            <span class="vagas ${full?'cheia':''}">${d.ativos}/${LIMITE_VAGAS} vagas</span>
+            ${full?'<span class="tag-cheia">Turma cheia</span>':''}
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-tog sair ${st==='sair'?'active':''}" data-act="sair">Sair</button>
+          <button class="btn-tog entrar ${st==='entrar'?'active':''}" data-act="entrar" ${full?'disabled title="Turma cheia — inclusão bloqueada"':''}>Entrar</button>
+        </div>`;
+      group.appendChild(row);
+    });
+    lista.appendChild(group);
+  });
+  aplicarBusca();
+}
+
+lista.addEventListener('click', e=>{
+  const b = e.target.closest('.btn-tog');
+  if(!b || b.disabled) return;
+  const sig = b.closest('.disc').dataset.sig;
+  const act = b.dataset.act;
+  estado[sig] = (estado[sig]===act) ? null : act;
+  render();
+  atualizarResumo();
+});
+
+function atualizarResumo(){
+  const sair = DISCIPLINAS.filter(d=>estado[d.sig]==='sair');
+  const entrar = DISCIPLINAS.filter(d=>estado[d.sig]==='entrar');
+  document.getElementById('cont-sair').textContent = sair.length;
+  document.getElementById('cont-entrar').textContent = entrar.length;
+  document.getElementById('resumo-sair').innerHTML = sair.length
+    ? sair.map(d=>`<li>${d.nome} <span style="color:var(--ink-soft)">(${d.sig})</span></li>`).join('')
+    : '<li class="empty">Nenhuma disciplina marcada.</li>';
+  document.getElementById('resumo-entrar').innerHTML = entrar.length
+    ? entrar.map(d=>`<li>${d.nome} <span style="color:var(--ink-soft)">(${d.sig})</span></li>`).join('')
+    : '<li class="empty">Nenhuma disciplina marcada.</li>';
+}
+
+const busca = document.getElementById('busca');
+busca.addEventListener('input', aplicarBusca);
+function aplicarBusca(){
+  const q = busca.value.trim().toLowerCase();
+  document.querySelectorAll('.disc').forEach(row=>{
+    const hit = !q || row.dataset.nome.includes(q) || row.dataset.sig.toLowerCase().includes(q);
+    row.classList.toggle('hidden', !hit);
+  });
+  document.querySelectorAll('.turma-group').forEach(g=>{
+    g.style.display = g.querySelectorAll('.disc:not(.hidden)').length>0 ? '' : 'none';
+  });
+}
+
+function showMsg(id, text, kind){
+  const m = document.getElementById(id);
+  m.textContent = text;
+  m.className = 'msg show ' + kind;
+  if(kind==='ok') setTimeout(()=>m.classList.remove('show'), 5000);
+}
+
+document.getElementById('limpar').addEventListener('click', ()=>{
+  Object.keys(estado).forEach(k=>delete estado[k]);
+  document.getElementById('justif').value='';
+  render(); atualizarResumo();
+  showMsg('msg','Seleções limpas.', 'ok');
+});
+
+function coletar(){
+  return {
+    nome: document.getElementById('nome').value.trim(),
+    matricula: document.getElementById('matricula').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    periodo: document.getElementById('periodo').value,
+    justificativa: document.getElementById('justif').value.trim(),
+    sair: DISCIPLINAS.filter(d=>estado[d.sig]==='sair'),
+    entrar: DISCIPLINAS.filter(d=>estado[d.sig]==='entrar'),
+  };
+}
+
+document.getElementById('gerar').addEventListener('click', ()=>{
+  const f = coletar();
+  if(!f.nome || !f.matricula){ showMsg('msg','Preencha nome e matrícula (etapa 1).','err'); return; }
+  if(f.sair.length===0 && f.entrar.length===0){ showMsg('msg','Marque ao menos uma disciplina para sair ou entrar.','err'); return; }
+  if(!f.justificativa){ showMsg('msg','Escreva a justificativa da solicitação.','err'); return; }
+
+  document.getElementById('d-nome').textContent = f.nome;
+  document.getElementById('d-mat').textContent = f.matricula;
+  document.getElementById('d-per').textContent = f.periodo || '—';
+  document.getElementById('d-email').textContent = f.email || '—';
+  document.getElementById('d-data').textContent = new Date().toLocaleDateString('pt-BR');
+  document.getElementById('d-just').textContent = f.justificativa;
+
+  const tb = document.querySelector('#d-table tbody');
+  tb.innerHTML='';
+  [...f.sair.map(d=>({act:'Sair',cls:'s',d})), ...f.entrar.map(d=>({act:'Entrar',cls:'e',d}))].forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="pill ${r.cls}">${r.act}</span></td><td>${r.d.sig}</td><td>${r.d.nome}</td><td>${TURMAS[r.d.turma].tag} · ${TURMAS[r.d.turma].code}</td><td>${r.d.ativos}/${LIMITE_VAGAS}</td>`;
+    tb.appendChild(tr);
+  });
+
+  document.getElementById('msg-envio').className='msg';
+  document.getElementById('doc').style.display='block';
+  document.getElementById('doc').scrollIntoView({behavior:'smooth'});
+});
+
+document.getElementById('voltar').addEventListener('click', ()=>{
+  document.getElementById('doc').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+document.getElementById('imprimir').addEventListener('click', ()=>window.print());
+
+function textoRequerimento(f){
+  let t=`REQUERIMENTO DE ALTERAÇÃO DE MATRÍCULA\nBacharelado em Ciência da Computação — Caxias · 2026.2\n\n`;
+  t+=`Aluno: ${f.nome}\nMatrícula: ${f.matricula}\nPeríodo: ${f.periodo||'—'}\nE-mail: ${f.email||'—'}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+  if(f.sair.length)   t+=`DISCIPLINAS PARA SAIR:\n`+f.sair.map(d=>`  - ${d.sig}  ${d.nome}  (${TURMAS[d.turma].code})`).join('\n')+`\n\n`;
+  if(f.entrar.length) t+=`DISCIPLINAS PARA ENTRAR:\n`+f.entrar.map(d=>`  - ${d.sig}  ${d.nome}  (${TURMAS[d.turma].code})`).join('\n')+`\n\n`;
+  t+=`JUSTIFICATIVA:\n${f.justificativa}\n`;
+  return t;
+}
+
+document.getElementById('copiar').addEventListener('click', ()=>{
+  navigator.clipboard.writeText(textoRequerimento(coletar())).then(
+    ()=>{ const b=document.getElementById('copiar'); b.textContent='Copiado ✓'; setTimeout(()=>b.textContent='Copiar texto',2000); },
+    ()=>alert('Não foi possível copiar automaticamente.')
+  );
+});
+
+document.getElementById('enviar').addEventListener('click', async ()=>{
+  const f = coletar();
+  const fmt = d => `${d.sig} - ${d.nome} (${TURMAS[d.turma].tag} · ${TURMAS[d.turma].code})`;
+  const payload = {
+    nome:f.nome, matricula:f.matricula, email:f.email, periodo:f.periodo,
+    justificativa:f.justificativa,
+    sair:f.sair.map(fmt), entrar:f.entrar.map(fmt),
+  };
+
+  if(!SHEETS_WEBAPP_URL){
+    showMsg('msg-envio','Integração não configurada: cole a URL do Apps Script na constante SHEETS_WEBAPP_URL para salvar na planilha. O requerimento acima já pode ser impresso normalmente.','info');
+    return;
+  }
+
+  const btn = document.getElementById('enviar');
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  try{
+    const res = await fetch(SHEETS_WEBAPP_URL, { method:'POST', body: JSON.stringify(payload) });
+    let ok = true;
+    try { const j = await res.json(); ok = j.ok !== false; } catch(_){ /* resposta opaca (CORS) — assume envio */ }
+    if(ok) showMsg('msg-envio','Solicitação enviada e salva na planilha. Confira uma nova linha na aba "Solicitações".','ok');
+    else   showMsg('msg-envio','A planilha respondeu com erro. Verifique a implantação do Apps Script.','err');
+  }catch(err){
+    showMsg('msg-envio','Não foi possível enviar a partir daqui (comum na pré-visualização). Baixe/abra este arquivo no seu navegador e envie novamente.','info');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Enviar para a planilha';
+  }
+});
+
+// esconde o banner de config quando a URL estiver preenchida
+if(SHEETS_WEBAPP_URL){ document.getElementById('banner-config').classList.add('hidden'); }
+
+render();
+atualizarResumo();
+</script>
+</body>
+</html>
